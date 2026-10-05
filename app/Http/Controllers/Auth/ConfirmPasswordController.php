@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Auth\ConfirmsPasswords;
+use Inertia\Inertia;
 
 class ConfirmPasswordController extends Controller
 {
@@ -20,6 +21,11 @@ class ConfirmPasswordController extends Controller
     */
 
     use ConfirmsPasswords;
+
+    public function showConfirmForm()
+    {
+        return Inertia::render('Auth/ConfirmPassword');
+    }
 
     /**
      * Where to redirect users when the intended url fails.

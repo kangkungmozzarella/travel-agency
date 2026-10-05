@@ -2,90 +2,54 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Models\Category;
-use Illuminate\Support\Str;
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\CategoryRequest;
+use App\Models\Category;
+use App\Support\UniqueSlug;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class CategoryController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(Request $request)
     {
-        $categories = category::paginate(10);
+        $filters = $request->validate(['search' => ['nullable', 'string', 'max:100']]);
+        $items = Category::withCount('blogs')->when($filters['search'] ?? null, fn ($query, $search) => $query->where('name', 'like', '%'.$search.'%'))->orderBy('name')->paginate(10)->withQueryString();
 
-        return view('admin.categories.index', compact('categories'));
+        return Inertia::render('Admin/Index', ['kind' => 'categories', 'items' => $items, 'filters' => $filters]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        return view('admin.categories.create');
+        return Inertia::render('Admin/CategoryForm', ['category' => null]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(CategoryRequest $request)
     {
-        if($request->validated()) {
-            $slug = Str::slug($request->name, '-');
-            category::create($request->validated() + ['slug' => $slug]);
-        }
+        Category::create($request->validated() + ['slug' => UniqueSlug::make(Category::class, $request->name)]);
 
-        return redirect()->route('admin.categories.index')->with([
-            'message' => 'Success Created !',
-            'alert-type' => 'success'
-        ]);
+        return to_route('admin.categories.index')->with('message', 'Kategori dibuat.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Category $category)
     {
-        return view('admin.categories.edit', compact('category'));
+        return Inertia::render('Admin/CategoryForm', ['category' => $category->only('id', 'name')]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(CategoryRequest $request, Category $category)
     {
-        if($request->validated()) {
-            $slug = Str::slug($request->name, '-');
-            $category->update($request->validated() + ['slug' => $slug]);
-        }
+        $category->update($request->validated() + ['slug' => UniqueSlug::make(Category::class, $request->name, $category)]);
 
-        return redirect()->route('admin.categories.index')->with([
-            'message' => 'Success Updated !',
-            'alert-type' => 'info'
-        ]);
+        return to_route('admin.categories.index')->with('message', 'Kategori diperbarui.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Category $category)
     {
+        if ($category->blogs()->exists()) {
+            return back()->withErrors(['delete' => 'Kategori masih digunakan oleh artikel. Pindahkan artikel ke kategori lain terlebih dahulu.']);
+        }
         $category->delete();
 
-        return redirect()->back()->with([
-            'message' => 'Success Deleted !',
-            'alert-type' => 'danger'
-        ]);
+        return back()->with('message', 'Kategori dihapus.');
     }
 }

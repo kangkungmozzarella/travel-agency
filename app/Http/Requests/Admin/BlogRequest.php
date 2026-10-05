@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class BlogRequest extends FormRequest
@@ -17,30 +18,30 @@ class BlogRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\Rule|array|string>
+     * @return array<string, Rule|array|string>
      */
     public function rules(): array
     {
-        switch($this->method()) {
-            case 'POST' : {
+        switch ($this->method()) {
+            case 'POST':
                 return [
-                    'title' => 'required',
-                    'excerpt' => 'required',
-                    'image' => ['required', 'image', 'mimes:png,jpg,jpeg'],
-                    'description' => 'required',
-                    'category_id' => 'required'
+                    'title' => ['required', 'string', 'max:255'],
+                    'excerpt' => ['required', 'string', 'max:2000'],
+                    'image' => ['required', 'image', 'mimes:png,jpg,jpeg,webp', 'max:5120'],
+                    'description' => ['required', 'string', 'max:50000'],
+                    'category_id' => ['required', 'integer', 'exists:categories,id'],
                 ];
-            }
+
             case 'PUT':
-            case 'PATCH': {
+            case 'PATCH':
                 return [
-                    'title' => 'required',
-                    'excerpt' => 'required',
-                    'image' => ['image', 'mimes:png,jpg,jpeg'],
-                    'description' => 'required',
-                    'category_id' => 'required'
+                    'title' => ['required', 'string', 'max:255'],
+                    'excerpt' => ['required', 'string', 'max:2000'],
+                    'image' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:5120'],
+                    'description' => ['required', 'string', 'max:50000'],
+                    'category_id' => ['required', 'integer', 'exists:categories,id'],
                 ];
-            }
+
         }
     }
 }

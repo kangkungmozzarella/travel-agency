@@ -2,75 +2,63 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Models\Gallery;
-use Illuminate\Http\Request;
-use App\Models\TravelPackage;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\File;
 use App\Http\Requests\Admin\GalleryRequest;
+use App\Models\Gallery;
+use App\Models\TravelPackage;
+use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
 
 class GalleryController extends Controller
 {
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(GalleryRequest $request, TravelPackage $travel_package)
     {
-        if($request->validated()){
-            $images = $request->file('images')->store(
-                'travel_package/gallery', 'public'
-            );
-            Gallery::create($request->except('images') + ['images' => $images,'travel_package_id' => $travel_package->id]);
-        }
+        $travel_package->galleries()->create([
+            'name' => $request->validated('name'),
+            'images' => $request->file('images')->store('travel_package/gallery', 'public'),
+        ]);
 
-        return redirect()->route('admin.travel_packages.edit', [$travel_package])->with([
-            'message' => 'Success Created !',
-            'alert-type' => 'success'
+        return back()->with('message', 'Foto ditambahkan ke galeri.');
+    }
+
+    public function edit(TravelPackage $travel_package, Gallery $gallery)
+    {
+        $this->checkParent($travel_package, $gallery);
+
+        return Inertia::render('Admin/GalleryForm', [
+            'package' => $travel_package->only('id', 'location'),
+            'gallery' => ['id' => $gallery->id, 'name' => $gallery->name, 'image_url' => Storage::url($gallery->images)],
         ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(TravelPackage $travel_package,Gallery $gallery)
+    public function update(GalleryRequest $request, TravelPackage $travel_package, Gallery $gallery)
     {
-        return view('admin.galleries.edit', compact('travel_package','gallery'));
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(GalleryRequest $request,TravelPackage $travel_package, Gallery $gallery)
-    {
-        if($request->validated()) {
-            if($request->images) {
-                File::delete('storage/'. $gallery->images);
-                $images = $request->file('images')->store(
-                    'travel_package/gallery', 'public'
-                );
-                $gallery->update($request->except('images') + ['images' => $images, 'travel_package_id' => $travel_package->id]);
-            }else {
-                $gallery->update($request->validated());
-            }
+        $this->checkParent($travel_package, $gallery);
+        $data = ['name' => $request->validated('name')];
+        $oldImage = $gallery->images;
+        if ($request->hasFile('images')) {
+            $data['images'] = $request->file('images')->store('travel_package/gallery', 'public');
+        }
+        $gallery->update($data);
+        if ($request->hasFile('images')) {
+            Storage::disk('public')->delete($oldImage);
         }
 
-        return redirect()->route('admin.travel_packages.edit', [$travel_package])->with([
-            'message' => 'Success Updated !',
-            'alert-type' => 'info'
-        ]);
+        return to_route('admin.travel_packages.edit', $travel_package)->with('message', 'Foto diperbarui.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(TravelPackage $travel_package,Gallery $gallery)
+    public function destroy(TravelPackage $travel_package, Gallery $gallery)
     {
-        File::delete('storage/'. $gallery->images);
+        $this->checkParent($travel_package, $gallery);
+        $image = $gallery->images;
         $gallery->delete();
+        Storage::disk('public')->delete($image);
 
-        return redirect()->back()->with([
-            'message' => 'Success Deleted !',
-            'alert-type' => 'danger'
-        ]);
+        return back()->with('message', 'Foto dihapus.');
+    }
+
+    private function checkParent(TravelPackage $package, Gallery $gallery): void
+    {
+        abort_unless($gallery->travel_package_id === $package->id, 404);
     }
 }

@@ -2,85 +2,67 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Models\Gallery;
-use Illuminate\Support\Str;
-use Illuminate\Http\Request;
-use App\Models\TravelPackage;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\TravelPackageRequest;
+use App\Http\Resources\TravelPackageResource;
+use App\Models\Booking;
+use App\Models\TravelPackage;
+use App\Support\UniqueSlug;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
 
 class TravelPackageController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(Request $request)
     {
-        $travel_packages = TravelPackage::paginate(10);
+        $filters = $request->validate(['search' => ['nullable', 'string', 'max:100']]);
+        $packages = TravelPackage::with('galleries')
+            ->when($filters['search'] ?? null, fn ($query, $search) => $query->where('location', 'like', '%'.$search.'%'))
+            ->latest()->paginate(10)->withQueryString();
 
-        return view('admin.travel_packages.index', compact('travel_packages'));
+        return Inertia::render('Admin/Index', [
+            'kind' => 'travel_packages',
+            'items' => TravelPackageResource::collection($packages),
+            'filters' => $filters,
+        ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        return view('admin.travel_packages.create');
+        return Inertia::render('Admin/PackageForm', ['package' => null]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(TravelPackageRequest $request)
     {
-        if($request->validated()) {
-            $slug = Str::slug($request->location, '-');
-            $travel_package = TravelPackage::create($request->validated() + ['slug' => $slug ]);
-        }
+        $package = TravelPackage::create($request->validated() + ['slug' => UniqueSlug::make(TravelPackage::class, $request->location)]);
 
-        return redirect()->route('admin.travel_packages.edit', [$travel_package])->with([
-            'message' => 'Success Created !',
-            'alert-type' => 'success'
-        ]);
+        return to_route('admin.travel_packages.edit', $package)->with('message', 'Paket dibuat. Tambahkan foto untuk melengkapi destinasi.');
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(TravelPackage $travel_package)
     {
-        $galleries = Gallery::paginate(10);
-        
-        return view('admin.travel_packages.edit', compact('travel_package','galleries'));
+        return Inertia::render('Admin/PackageForm', ['package' => (new TravelPackageResource($travel_package->load('galleries')))->resolve()]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(TravelPackageRequest $request, TravelPackage $travel_package)
     {
-        if($request->validated()) {
-            $slug = Str::slug($request->location, '-');
-            $travel_package->update($request->validated() + ['slug' => $slug]);
-        }
+        $travel_package->update($request->validated() + ['slug' => UniqueSlug::make(TravelPackage::class, $request->location, $travel_package)]);
 
-        return redirect()->route('admin.travel_packages.index')->with([
-            'message' => 'Success Updated !',
-            'alert-type' => 'info'
-        ]);
+        return back()->with('message', 'Perubahan paket disimpan.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(TravelPackage $travel_package)
     {
-        $travel_package->delete();
+        $images = $travel_package->galleries()->pluck('images');
 
-        return redirect()->back()->with([
-            'message' => 'Success Deleted !',
-            'alert-type' => 'danger'
-        ]);
+        if (Booking::where('travel_package_id', $travel_package->id)->exists()) {
+            return back()->withErrors(['delete' => 'Paket masih memiliki booking. Pertahankan paket agar riwayat booking tidak hilang.']);
+        }
+
+        $travel_package->delete();
+        Storage::disk('public')->delete($images->all());
+
+        return back()->with('message', 'Paket dan foto galerinya dihapus.');
     }
 }

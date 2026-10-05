@@ -2,9 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Booking;
-use Illuminate\Http\Request;
 use App\Http\Requests\BookingRequest;
+use App\Models\Booking;
 
 class BookingController extends Controller
 {
@@ -13,7 +12,7 @@ class BookingController extends Controller
         Booking::create($request->validated());
 
         return redirect()->back()->with([
-            'message' => "Success, we'll process your booking"
+            'message' => 'Permintaan booking diterima. Tim kami akan menghubungi Anda untuk konfirmasi.',
         ]);
     }
 }

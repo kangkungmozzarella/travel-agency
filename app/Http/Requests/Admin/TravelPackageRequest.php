@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class TravelPackageRequest extends FormRequest
@@ -17,28 +18,28 @@ class TravelPackageRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\Rule|array|string>
+     * @return array<string, Rule|array|string>
      */
     public function rules(): array
     {
-        switch($this->method()) {
-            case 'POST' : {
+        switch ($this->method()) {
+            case 'POST':
                 return [
-                    'type' => 'required',
-                    'location' => 'required',
-                    'price' => 'required',
-                    'description' => 'required'
+                    'type' => ['required', 'string', 'max:255'],
+                    'location' => ['required', 'string', 'max:255'],
+                    'price' => ['required', 'integer', 'min:0', 'max:2147483647'],
+                    'description' => ['required', 'string', 'max:50000'],
                 ];
-            }
+
             case 'PUT':
-            case 'PATCH': {
+            case 'PATCH':
                 return [
-                    'type' => 'required',
-                    'location' => 'required',
-                    'price' => 'required',
-                    'description' => 'required'
+                    'type' => ['required', 'string', 'max:255'],
+                    'location' => ['required', 'string', 'max:255'],
+                    'price' => ['required', 'integer', 'min:0', 'max:2147483647'],
+                    'description' => ['required', 'string', 'max:50000'],
                 ];
-            }
+
         }
     }
 }

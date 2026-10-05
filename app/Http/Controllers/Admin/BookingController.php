@@ -2,72 +2,36 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
+use Illuminate\Validation\Rule;
+use Inertia\Inertia;
 
 class BookingController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(Request $request)
     {
-        $bookings = Booking::with('travel_package')->paginate(10);
+        $filters = $request->validate(['search' => ['nullable', 'string', 'max:100'], 'status' => ['nullable', Rule::in(Booking::STATUSES)]]);
+        $bookings = Booking::with('travel_package:id,location')
+            ->when($filters['search'] ?? null, fn ($query, $search) => $query->where(fn ($query) => $query->where('name', 'like', '%'.$search.'%')->orWhere('email', 'like', '%'.$search.'%')))
+            ->when($filters['status'] ?? null, fn ($query, $status) => $query->where('status', $status))
+            ->latest()->paginate(10)->withQueryString();
 
-        return view('admin.bookings.index', compact('bookings'));
+        return Inertia::render('Admin/Index', ['kind' => 'bookings', 'items' => $bookings, 'filters' => $filters]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function update(Request $request, Booking $booking)
     {
-        //
+        $booking->update($request->validate(['status' => ['required', Rule::in(Booking::STATUSES)]]));
+
+        return back()->with('message', 'Status booking diperbarui.');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Booking $booking)
     {
         $booking->delete();
 
-        return redirect()->back()->with([
-            'message' => 'success deleted !',
-            'alert-type' => 'danger'
-        ]);
+        return back()->with('message', 'Booking dihapus.');
     }
 }

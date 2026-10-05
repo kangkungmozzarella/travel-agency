@@ -2,109 +2,71 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\BlogRequest;
+use App\Http\Resources\BlogResource;
 use App\Models\Blog;
 use App\Models\Category;
-use Illuminate\Support\Str;
+use App\Support\UniqueSlug;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\File;
-use App\Http\Requests\Admin\BlogRequest;
+use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
 
 class BlogController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(Request $request)
     {
-        $blogs = Blog::with('category')->paginate(5);
+        $filters = $request->validate(['search' => ['nullable', 'string', 'max:100']]);
 
-        return view('admin.blogs.index', compact('blogs'));
+        return Inertia::render('Admin/Index', [
+            'kind' => 'blogs',
+            'items' => BlogResource::collection(Blog::with('category')->when($filters['search'] ?? null, fn ($query, $search) => $query->where('title', 'like', '%'.$search.'%'))->latest()->paginate(10)->withQueryString()),
+            'filters' => $filters,
+        ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        $categories = Category::get(['name', 'id']);
-
-        return view('admin.blogs.create', compact('categories'));
+        return Inertia::render('Admin/BlogForm', ['blog' => null, 'categories' => Category::orderBy('name')->get(['id', 'name'])]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(BlogRequest $request)
     {
-        if($request->validated()) {
-            $image = $request->file('image')->store(
-                'blog/images', 'public'
-            );
-            $slug = Str::slug($request->title, '-');
+        $data = $request->safe()->except('image');
+        $data['image'] = $request->file('image')->store('blog/images', 'public');
+        $data['slug'] = UniqueSlug::make(Blog::class, $request->title);
+        Blog::create($data);
 
-            Blog::create($request->except('image') + ['slug' => $slug, 'image' => $image]);
-        }
-
-        return redirect()->route('admin.blogs.index')->with([
-            'message' => 'Success Created !',
-            'alert-type' => 'success'
-        ]);
+        return to_route('admin.blogs.index')->with('message', 'Artikel diterbitkan.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Blog $blog)
     {
-        $categories = Category::get(['name','id']);
-
-        return view('admin.blogs.edit', compact('blog','categories'));
+        return Inertia::render('Admin/BlogForm', ['blog' => (new BlogResource($blog->load('category')))->resolve(), 'categories' => Category::orderBy('name')->get(['id', 'name'])]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(BlogRequest $request, Blog $blog)
     {
-        if($request->validated()) {
-            $slug = Str::slug($request->title, '-');
-            if($request->image) {
-                File::delete('storage/'. $blog->image);
-                $image = $request->file('image')->store(
-                    'blog/images', 'public'
-                );
-                $blog->update($request->except('image') + ['slug' => $slug, 'image' => $image]);
-            }else {
-                $blog->update($request->validated() + ['slug' => $slug]);
-            }
+        $data = $request->safe()->except('image');
+        $data['slug'] = UniqueSlug::make(Blog::class, $request->title, $blog);
+        $oldImage = $blog->image;
+        if ($request->hasFile('image')) {
+            $data['image'] = $request->file('image')->store('blog/images', 'public');
+        }
+        $blog->update($data);
+        if ($request->hasFile('image')) {
+            Storage::disk('public')->delete($oldImage);
         }
 
-        return redirect()->route('admin.blogs.index')->with([
-            'message' => 'Success Updated !',
-            'alert-type' => 'info'
-        ]);
+        return to_route('admin.blogs.index')->with('message', 'Artikel diperbarui.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Blog $blog)
     {
-        File::delete('storage/'. $blog->image);
+        $image = $blog->image;
         $blog->delete();
+        Storage::disk('public')->delete($image);
 
-        return redirect()->back()->with([
-            'message' => 'Success Deleted !',
-            'alert-type' => 'danger'
-        ]);
+        return back()->with('message', 'Artikel dihapus.');
     }
 }

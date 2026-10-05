@@ -16,8 +16,8 @@ class Blog extends Model
         return $this->belongsTo(Category::class);
     }
 
-    public function incrementReadCount() {
-        $this->reads++;
-        return $this->save();
+    public function incrementReadCount()
+    {
+        return $this->increment('reads');
     }
 }

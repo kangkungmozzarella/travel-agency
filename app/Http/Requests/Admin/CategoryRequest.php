@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class CategoryRequest extends FormRequest
@@ -17,22 +18,22 @@ class CategoryRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\Rule|array|string>
+     * @return array<string, Rule|array|string>
      */
     public function rules(): array
     {
-        switch($this->method()) {
-            case 'POST' : {
+        switch ($this->method()) {
+            case 'POST':
                 return [
-                    'name' => ['required','unique:categories']
+                    'name' => ['required', 'string', 'max:255', 'unique:categories'],
                 ];
-            }
+
             case 'PUT':
-            case 'PATCH': {
+            case 'PATCH':
                 return [
-                    'name' => ['required','unique:categories,name,'. $this->route()->category->id]
+                    'name' => ['required', 'string', 'max:255', 'unique:categories,name,'.$this->route()->category->id],
                 ];
-            }
+
         }
     }
 }

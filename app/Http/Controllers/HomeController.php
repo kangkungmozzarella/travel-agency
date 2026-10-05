@@ -2,22 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\BlogResource;
+use App\Http\Resources\TravelPackageResource;
 use App\Models\Blog;
-use Illuminate\Http\Request;
 use App\Models\TravelPackage;
+use Inertia\Inertia;
 
 class HomeController extends Controller
 {
-    /**
-     * Show the application dashboard.
-     *
-     * @return \Illuminate\Contracts\Support\Renderable
-     */
     public function index()
     {
-        $travel_packages = TravelPackage::with('galleries')->get();
-        $blogs = Blog::get()->take(3);
-
-        return view('homepage', compact('travel_packages','blogs'));
+        return Inertia::render('Home', [
+            'packages' => TravelPackageResource::collection(TravelPackage::with('galleries')->latest()->limit(4)->get()),
+            'blogs' => BlogResource::collection(Blog::with('category')->latest()->limit(3)->get()),
+            'packageCount' => TravelPackage::count(),
+        ]);
     }
 }

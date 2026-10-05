@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class GalleryRequest extends FormRequest
@@ -17,24 +18,24 @@ class GalleryRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\Rule|array|string>
+     * @return array<string, Rule|array|string>
      */
     public function rules(): array
     {
-        switch($this->method()) {
-            case 'POST' : {
+        switch ($this->method()) {
+            case 'POST':
                 return [
-                    'name' => 'required',
-                    'images' => ['required','image', 'mimes:png,jpg,jpeg'],
+                    'name' => ['required', 'string', 'max:255'],
+                    'images' => ['required', 'image', 'mimes:png,jpg,jpeg,webp', 'max:5120'],
                 ];
-            }
+
             case 'PUT':
-            case 'PATCH': {
+            case 'PATCH':
                 return [
-                    'name' => 'required',
-                    'images' => ['image', 'mimes:png,jpg,jpeg'],
+                    'name' => ['required', 'string', 'max:255'],
+                    'images' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:5120'],
                 ];
-            }
+
         }
     }
 }

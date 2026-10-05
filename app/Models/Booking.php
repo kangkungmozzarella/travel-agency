@@ -11,6 +11,8 @@ class Booking extends Model
 
     protected $guarded = ['id'];
 
+    public const STATUSES = ['pending', 'confirmed', 'completed', 'cancelled'];
+
     public function travel_package()
     {
         return $this->belongsTo(TravelPackage::class);
