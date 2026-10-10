@@ -8,11 +8,8 @@ test('desktop and phone previews keep content within the viewport and support ke
     await page.emulateMedia({ reducedMotion: 'reduce' })
     await page.setViewportSize({ width: 1440, height: 1000 })
     await page.goto('/')
-    await page.locator('.coastline-scene svg').waitFor()
+    await page.locator('.island-ready').waitFor()
     await page.evaluate(async () => {
-        const hero = new Image()
-        hero.src = document.querySelector('.coastline-scene image').getAttribute('href')
-        await hero.decode()
         await Promise.all(Array.from(document.images).map((img) => img.decode().catch(() => {})))
         document.querySelectorAll('.reveal').forEach((el) => el.classList.add('revealed'))
     })

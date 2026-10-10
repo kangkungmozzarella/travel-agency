@@ -29,7 +29,7 @@ class TravelPackageController extends Controller
         return Inertia::render('Packages/Index', [
             'packages' => TravelPackageResource::collection($query->paginate(9)->withQueryString()),
             'types' => TravelPackage::distinct()->orderBy('type')->pluck('type'),
-            'filters' => $filters,
+            'filters' => (object) $filters,
         ]);
     }
 

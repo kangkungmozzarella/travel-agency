@@ -2,11 +2,16 @@
 import { Link } from '@inertiajs/vue3'
 import Icon from './Icon.vue'
 import { money, imageFallback } from '../lib/format'
-defineProps({ package: Object, revealDelay: { type: Number, default: 0 } })
+defineProps({ package: Object, revealDelay: { type: Number, default: 0 }, featured: Boolean })
 </script>
 
 <template>
-    <article class="package-card" v-reveal="revealDelay">
+    <article
+        class="package-card"
+        :class="{ 'package-featured': featured }"
+        v-reveal="featured ? false : revealDelay"
+        v-tilt="!featured"
+    >
         <Link :href="'/travel-packages/' + package.slug" class="package-link">
             <div class="package-image">
                 <img
@@ -21,6 +26,9 @@ defineProps({ package: Object, revealDelay: { type: Number, default: 0 } })
                     ><Icon name="pin" :size="16" /> Destinasi perjalanan</span
                 >
                 <h3>{{ package.location }}</h3>
+                <p v-if="featured" class="featured-invitation">
+                    Lihat detail perjalanan dan pilih tanggal keberangkatanmu.
+                </p>
                 <div class="package-bottom">
                     <div>
                         <span class="small muted">Harga paket</span

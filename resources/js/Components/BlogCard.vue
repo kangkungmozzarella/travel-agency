@@ -5,7 +5,7 @@ defineProps({ blog: Object, revealDelay: { type: Number, default: 0 } })
 </script>
 
 <template>
-    <article class="blog-card" v-reveal="revealDelay">
+    <article class="blog-card" v-reveal="revealDelay" v-tilt>
         <Link :href="'/blogs/' + blog.slug"
             ><div class="blog-image">
                 <img

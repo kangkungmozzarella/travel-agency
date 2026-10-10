@@ -2,11 +2,11 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { Head, Link, router } from '@inertiajs/vue3'
 import PublicLayout from '../Layouts/PublicLayout.vue'
-import PackageCard from '../Components/PackageCard.vue'
+import DestinationDeck from '../Components/DestinationDeck.vue'
 import BlogCard from '../Components/BlogCard.vue'
 import EmptyState from '../Components/EmptyState.vue'
 import Icon from '../Components/Icon.vue'
-import CoastlineScene from '../Components/CoastlineScene.vue'
+import IslandScene from '../Components/IslandScene.vue'
 defineOptions({ layout: PublicLayout })
 defineProps({ packages: Object, blogs: Object, packageCount: Number })
 const search = ref('')
@@ -56,7 +56,7 @@ const submit = () =>
             </div>
         </div>
         <div ref="heroVisual" class="hero-visual" :class="{ 'motion-paused': !heroVisible }">
-            <CoastlineScene />
+            <IslandScene :destinations="packages.data.map((item) => item.location)" />
             <div class="hero-caption">
                 <Icon name="compass" :size="28" />
                 <div>
@@ -84,14 +84,7 @@ const submit = () =>
                 /></Link>
             </div>
         </div>
-        <div v-if="packages.data.length" class="package-grid home-package-grid">
-            <PackageCard
-                v-for="(item, index) in packages.data"
-                :key="item.id"
-                :package="item"
-                :reveal-delay="(index % 4) * 100"
-            />
-        </div>
+        <DestinationDeck v-if="packages.data.length" :packages="packages.data" />
         <EmptyState
             v-else
             title="Perjalanan sedang disiapkan"

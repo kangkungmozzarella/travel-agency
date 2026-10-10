@@ -110,3 +110,20 @@ npm run preview:test
 Preview tersedia di `http://127.0.0.1:8020`. Fixture browser diberi label `data uji`, menggunakan akun `browser@example.test` / `BrowserTest123!`, dan hanya dibuat di lingkungan `testing` dengan SQLite. Database ini terpisah dari data bisnis dan bukan data yang akan diterbitkan. Pengujian browser membuat serta menghapus konten uji. `E2E_BASE_URL` dapat mengganti alamat server jika menunjuk ke server khusus pengujian; jangan arahkan ke aplikasi sungguhan. Trace kegagalan dan screenshot disimpan di `test-results/`.
 
 Untuk merapikan kode frontend, gunakan `npm run format`; untuk memeriksa format tanpa mengubah file, gunakan `npm run format:check`.
+
+## Preview dengan konten destinasi
+
+```bash
+npm run build
+npm run preview
+```
+
+Buka `http://127.0.0.1:8020`. Preview ini memakai `database/preview.sqlite` yang menetap setelah server dihentikan. Tersedia 14 paket destinasi lengkap dengan itinerary dan galeri, serta 22 artikel jurnal dalam kategori Panduan, Tips, dan Cerita perjalanan. Login lokal: `admin@otewe.local` / `OtewePreview123!`. Akun ini hanya untuk preview lokal. Tidak ada booking atau peserta buatan. Harga adalah estimasi contoh yang perlu dikonfirmasi; foto koleksi lama digunakan sebagai ilustrasi.
+
+Untuk menambahkan konten awal ke database aplikasi yang sudah dikonfigurasi di `.env`:
+
+```bash
+php artisan db:seed --class=TravelContentSeeder
+```
+
+Seeder dapat dijalankan ulang: slug yang sudah ada tidak ditimpa dan konten tidak digandakan. Konten selanjutnya dapat diedit melalui admin. `npm run preview:test` tetap tersedia untuk fixture pengujian browser yang terpisah.

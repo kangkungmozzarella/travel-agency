@@ -32,6 +32,10 @@ Screenshot hasil pemeriksaan tersedia setelah tes di `test-results/` (tidak masu
 
 ## Batas pemeriksaan
 
+Konten destinasi: empat paket dan empat panduan ditambahkan lewat `TravelContentSeeder`, tanpa booking atau peserta buatan. Test seeder lulus (7 assertion) untuk jumlah konten, file foto, pencegahan duplikasi, dan perlindungan edit admin. Preview memakai database lokal menetap `database/preview.sqlite`; beranda, katalog, detail paket, jurnal, dan detail artikel diperiksa di browser tanpa label fixture atau exception JavaScript. Harga merupakan estimasi contoh, foto merupakan ilustrasi dari aset lama, dan informasi geografis merujuk Indonesia Travel melalui tautan di artikel.
+
+6 Oktober 2026: destination deck mengikuti progres scroll secara reversibel. Tes deck lulus untuk transform yang berubah, kartu aktif, pembalikan arah, fokus/Enter menuju detail paket, judul dan harga terlihat di mobile, dan fallback reduced motion. Tes morph (2) serta visual (1) juga lulus setelah implementasi; tes deck diulang setelah penyesuaian tinggi foto mobile dan toleransi pembulatan subpiksel viewport. Screenshot transisi dan mobile diperiksa. Build produksi, format, dan pemeriksaan diff lulus.
+
 Pembaruan kontur SVG: dua tes motion lulus untuk perubahan path organik, respons pointer foto, penanda yang mengikuti kontur, jeda offscreen, serta perubahan reduced motion tanpa reload. Tes visual desktop/mobile lulus setelah selector foto diperbarui dari img HTML ke image SVG; screenshot membekukan kontur lewat reduced motion. Build produksi, format frontend, dan pemeriksaan diff lulus.
 
 Pembaruan neobrutalist: kontrol animasi dipindahkan dari hero ke footer, preferensi disimpan di localStorage, dan gaya garis/bayangan keras hanya diterapkan pada halaman publik. Build produksi, pemeriksaan diff, dua tes motion, dan tes visual (3 tes) lulus setelah perubahan ini. Screenshot desktop dan mobile diperiksa; halaman tidak overflow pada ukuran dalam tes visual. Hero diuji tanpa tombol pengaturan, dan kontrol footer diuji untuk menjeda serta mengaktifkan animasi.

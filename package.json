@@ -5,6 +5,7 @@
         "dev": "vite",
         "build": "vite build",
         "test:e2e": "playwright test",
+        "preview": "bash scripts/preview.sh",
         "preview:test": "bash tests/Browser/serve.sh",
         "format": "prettier --write resources/js resources/css tests/Browser/*.js vite.config.js playwright.config.js package.json .prettierrc.json",
         "format:check": "prettier --check resources/js resources/css tests/Browser/*.js vite.config.js playwright.config.js package.json .prettierrc.json"
@@ -19,6 +20,7 @@
     "dependencies": {
         "@inertiajs/vue3": "^2.0.0",
         "dompurify": "^3.2.0",
+        "three": "^0.169.0",
         "vue": "^3.5.0"
     }
 }

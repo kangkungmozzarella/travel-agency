@@ -13,6 +13,7 @@ createInertiaApp({
             .use(plugin)
             .directive('reveal', {
                 mounted(el, binding) {
+                    if (binding.value === false) return
                     if (
                         window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
                         !('IntersectionObserver' in window)
@@ -39,6 +40,33 @@ createInertiaApp({
                 unmounted(el) {
                     el._revealObserver?.disconnect()
                     el.removeEventListener('focusin', el._revealFocus)
+                },
+            })
+            .directive('tilt', {
+                mounted(el, binding) {
+                    if (binding.value === false) return
+                    el._tiltMove = (event) => {
+                        if (
+                            event.pointerType !== 'mouse' ||
+                            window.matchMedia('(prefers-reduced-motion: reduce)').matches
+                        )
+                            return
+                        const bounds = el.getBoundingClientRect()
+                        const x = (event.clientX - bounds.left) / bounds.width - 0.5
+                        const y = (event.clientY - bounds.top) / bounds.height - 0.5
+                        el.style.setProperty('--tilt-x', `${(y * -9).toFixed(2)}deg`)
+                        el.style.setProperty('--tilt-y', `${(x * 12).toFixed(2)}deg`)
+                    }
+                    el._tiltLeave = () => {
+                        el.style.removeProperty('--tilt-x')
+                        el.style.removeProperty('--tilt-y')
+                    }
+                    el.addEventListener('pointermove', el._tiltMove)
+                    el.addEventListener('pointerleave', el._tiltLeave)
+                },
+                unmounted(el) {
+                    el.removeEventListener('pointermove', el._tiltMove)
+                    el.removeEventListener('pointerleave', el._tiltLeave)
                 },
             })
             .mount(el)
